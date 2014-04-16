@@ -80,7 +80,7 @@ class Router {
         
         // if the file is not there, die
         if (is_readable($this->file) === false) {
-            $this->file = $this->path . '/error404.php';
+            $this->file = $this->path . '/error404.controller.php';
             $this->controller = 'error404';
         }
         
