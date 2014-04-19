@@ -15,7 +15,9 @@ class IndexController extends BaseController {
         $this->registry->template->welcome = 'Welcome to The Grub Hub!';
         
         // load the index template
+        $this->registry->template->show('_header.guest');
         $this->registry->template->show('index');
+        $this->registry->template->show('_footer.guest');
     }
     
 }

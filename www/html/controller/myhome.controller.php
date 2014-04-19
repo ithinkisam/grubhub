@@ -15,9 +15,9 @@ class MyHomeController extends BaseController {
         
         // TODO
     
-        $this->registry->template->show('_header');
+        $this->registry->template->show('_header.user');
         $this->registry->template->show('myhome');
-        $this->registry->template->show('_footer');
+        $this->registry->template->show('_footer.user');
     }
 
 }
