@@ -11,17 +11,12 @@
         <meta name="apple-touch-icon" href="/img/apple-touch-icon.png" />
         <meta name="apple-touch-startup-image" href="/img/apple-touch-startup.png" />
         
-        <!-- add CSS here -->
-        <!-- <link href="..." rel="stylesheet"> -->
-        <!-- <link rel="icon" type="image/ico" href="favicon.ico"> -->
+        <link href="/css/font-awesome.css" rel="stylesheet">
+        <link href="/css/bootstrap_journal.css" rel="stylesheet">
+        <link href="/css/fullcalendar.css" rel="stylesheet">
+        <link href="/css/style.css" rel="stylesheet">
+        <link rel="icon" type="image/ico" href="/img/favicon.ico">
+        
         <title>The Grub Hub</title>
     </head>
-    <body>
-        <ul>
-            <li>Nav Item #1</li>
-            <li>Nav Item #2</li>
-            <li>Nav Item #3</li>
-        </ul>
-        <hr />
-        <h1>Title</h1>
-        <hr />
+    <body class=<?php echo "'" . $bodyClass . "'"; ?>>

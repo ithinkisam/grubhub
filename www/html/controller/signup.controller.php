@@ -12,9 +12,12 @@ class SignUpController extends BaseController {
      */
     public function index() {
         
-        // TODO
+        // set up template variables
+        $this->registry->template->bodyClass = '';
         
-        $this->registry->template->show('_header.guest');
+        // show views
+        $this->registry->template->show('_header');
+        $this->registry->template->show('_nav.guest');
         $this->registry->template->show('signup');
         $this->registry->template->show('_footer.guest');
     }

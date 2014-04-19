@@ -78,7 +78,7 @@ class Router {
         // check the route
         $this->getController();
         
-        // if the file is not there, die
+        // if the file is not there, server a 404
         if (is_readable($this->file) === false) {
             $this->file = $this->path . '/error404.controller.php';
             $this->controller = 'error404';
