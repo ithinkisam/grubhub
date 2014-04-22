@@ -13,9 +13,14 @@ class IndexController extends BaseController {
     public function index() {
         // Determine whether the the user is logged in and direct
         // them accordingly
-        
-        // TODO
-        $this->handleGuest();
+        $sec = new SecurityManager();
+        if ($sec->checkAdmin($_SESSION)) {
+            $this->handleUser();
+        } else if ($sec->checkUserA($_SESSION)) {
+            $this->handleUser();
+        } else {
+            $this->handleGuest();
+        }
     }
     
     private function handleGuest() {
@@ -30,6 +35,18 @@ class IndexController extends BaseController {
     }
     
     private function handleUser() {
+        // set up template variables
+        $this->registry->template->bodyClass = '';
+        
+        // show views
+        $this->registry->template->show('_header');
+        $this->registry->template->show('_nav.user');
+        $this->registry->template->show('home');
+        $this->registry->template->show('_footer.user');
+    }
+    
+    // TODO
+    private function handleAdmin() {
         // set up template variables
         $this->registry->template->bodyClass = '';
         

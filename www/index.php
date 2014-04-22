@@ -13,9 +13,16 @@
  *
  *  @since 1.0.0
  */
+ 
+// start the session
+session_start();
 
-// error reporting on
-error_reporting(E_ALL);
+// error reporting on in dev and off in production
+if (isset($_SERVER["SystemRoot"]) !== false && $_SERVER["SystemRoot"] == "C:\\Windows") {
+    error_reporting(E_ALL);
+} else {
+    error_reporting(0);
+}
 
 // define the site path constant
 $site_path = realpath(dirname(__FILE__));

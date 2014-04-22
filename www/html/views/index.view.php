@@ -1,35 +1,29 @@
 
 <script>
     function checkLogin() {
-        console.log("checkLogin() called");
-        if (document.getElementById("loginUsername").value == "") {
-            $("#error").html("Enter a valid username.");
-            $("#error-div").show('normal');
+        if ($('#loginUsername').val() == "") {
+            $('#error').html("Enter a valid username.");
+            $('#errorDiv').show("normal");
             return false;
         }
-        if (document.getElementById("loginPassword").value == "") {
-            $('#error').html("Enter a valid password.");
-            $('#error-div').show('normal');
+        if ($('#loginPassword').val() == "") {
+            $('#error').html("Enter a valid password");
+            $('#errorDiv').show("normal");
             return false;
         }
-        processLogin();
-        return false;
+        return true;
+    }
+    
+    function setFocus() {
+        if ($('#username').val() == "") {
+            $('#username').focus();
+        } else if ($('#password').val() == "") {
+            $('#password').focus();
+        }
     }
 
-    function processLogin() {
-        var abc123 = $("#loginUsername").val();
-        var def456 = $("#loginPassword").val();
-        $.post("/grubhubv2/web/_custom_pages/process_login.php",
-            { user: abc123, pass: def456 })
-            .done( function(data) {
-                        if (data == "") {
-                            location = "/grubhubv2/web/";
-                        } else {
-                            $("#error").html("Invalid username/password.");
-                            $("#error-div").show("normal");
-                        }
-                   });
-    }
+    window.onload = setFocus;
+    
 </script>
 
 <div class="container center text-center">
@@ -78,18 +72,18 @@
             <p class="lead">All your recipes. In one place. Available everywhere.</p>
         </div>
         
-        <div id="error-div" class="text-danger">
+        <div id="errorDiv" class="text-danger">
             <p id="error"></p>
         </div>
         
-        <form class="form-inline" role="form" action="" method="post" onsubmit="return checkLogin();">
+        <form class="form-inline" role="form" action="/auth/login" method="post" onsubmit="return checkLogin();">
             <div class="form-group">
-                <label class="sr-only" for="loginUsername">Username</label>
-                <input type="text" class="form-control" id="loginUsername" placeholder="Username..." />
+                <label class="sr-only" for="username">Username</label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Username..." />
             </div>
             <div class="form-group">
-                <label class="sr-only" for="loginPassword">Password</label>
-                <input type="password" class="form-control" id="loginPassword" placeholder="Password..." />
+                <label class="sr-only" for="password">Password</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password..." />
             </div>
             <button type="submit" class="btn btn-success">Sign In</button>
         </form>

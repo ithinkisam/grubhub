@@ -21,6 +21,10 @@ abstract class BaseController {
         $this->registry = $registry;
     }
     
+    protected function redirect($location) {
+        header('Location: $location');
+    }
+    
     /**
      *  Default action if one if not provided in the request
      */
