@@ -13,9 +13,6 @@
  *
  *  @since 1.0.0
  */
- 
-// start the session
-session_start();
 
 // error reporting on in dev and off in production
 if (isset($_SERVER["SystemRoot"]) !== false && $_SERVER["SystemRoot"] == "C:\\Windows") {
@@ -26,12 +23,15 @@ if (isset($_SERVER["SystemRoot"]) !== false && $_SERVER["SystemRoot"] == "C:\\Wi
 
 // define the site path constant
 $site_path = realpath(dirname(__FILE__));
-define ('__SITE_PATH', $site_path . '/html');
+define ('__SITE_PATH', $site_path . '/../app');
 
 // include the init.php file
 include __SITE_PATH . '/includes/init.php';
 
 // load the router
+$registry = new Registry();
+$registry->request = new Request();
+$registry->session = new Session();
 $registry->router = new Router($registry);
 
 // set the controller path
