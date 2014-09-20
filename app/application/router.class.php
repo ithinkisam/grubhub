@@ -36,8 +36,14 @@ class Router {
      *  @access public
      *
      *  @var string $file The controller file.
+     *  @var string $unauthenticatedController Controller file for
+     *       unauthenticated users.
+     *  @var string $unauthorizedController Controller file for
+     *       unauthenticated users.
      */
     public $file;
+    public $unauthenticatedController;
+    public $unauthorizedController;
     
     /**
      *  Default constructor.
@@ -65,27 +71,35 @@ class Router {
     }
     
     /**
+     *  Sets the controller for unauthenticated users.
+     *
+     *  @since 1.0.0
+     *
+     *  @param string $controller The controller to use.
+     */
+    public function setUnauthenticatedController($controller) {
+        $this->unauthenticatedController = $controller;
+    }
+    
+    /**
+     *  Sets the controller for unauthorized users.
+     *
+     *  @since 1.0.0
+     *
+     *  @param string $controller The controller to use.
+     */
+    public function setUnauthorizedController($controller) {
+        $this->unauthorizedController = $controller;
+    }
+    
+    /**
      *  Invokes the appropriate controller action.
      *
      *  @since 1.0.0
      */
     public function load() {
-        // check the route
-        $controller = $this->registry->request->getController();
-        $this->file = $this->path . '/' . $controller . '.controller.php';
-        
-        // if the file is not there, server a 404
-        if (is_readable($this->file) === false) {
-            $this->file = $this->path . '/error404.controller.php';
-            $controller = 'error404';
-        }
-        
-        // include the controller
-        include $this->file;
-        
-        // a new controller class instance
-        $class = $controller . 'Controller';
-        $controller = new $class($this->registry);
+    
+        $controller = $this->getController($this->registry->request->getController());
         
         // check if the action is callable
         $action = $this->registry->request->getAction();
@@ -102,15 +116,34 @@ class Router {
         try {
             $controller->$action();
         } catch (NotAuthenticatedException $e) {
-            // TODO
-            // route to "unauthenticated" controller
+            $controller = $this->getController(AppConstants::CONTROLLER_UNAUTHENTICATED);
+            $controller->index();
         } catch (NotAuthorizedException $e) {
-            // TODO
-            // route to "unauthorized" controller
+            $controller = $this->getController(AppConstants::CONTROLLER_UNAUTHORIZED);
+            $controller->index();
         } catch (Exception $e) {
-            // TODO
-            // catch-all
+            $controller = $this->getController(AppConstants::CONTROLLER_ERROR);
+            print "Exception: " . $e->getMessage . "<br/>";
+            $controller->index();
         }
+    }
+    
+    private function getController($controller) {
+        $this->file = $this->path . '/' . $controller . '.controller.php';
+        
+        // If the file is not there, serve a 404
+        if (is_readable($this->file) === false) {
+            print "Could not find controller: " . $this->file . "<br/>";
+            $controller = AppConstants::CONTROLLER_404;
+            $this->file = $this->path . '/' . $controller . '.controller.php';
+        }
+        
+        // Include the controller file
+        include $this->file;
+        
+        // Instantiate a new controller class
+        $class = $controller . 'Controller';
+        return new $class($this->registry);
     }
 
 }

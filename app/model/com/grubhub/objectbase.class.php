@@ -46,12 +46,18 @@ class ObjectBase {
     public function verifyType($obj, $type, $inner_type=null) {
         if (is_object($obj)) {
             if (get_class($obj) !== $type) {
-                throw new Exception(get_class() .
-                        ':: Non-' . $type . ' value for ' .
-                        get_class($obj) . ' object');
+                // $obj is not of class $type
+                if (!in_array($type, class_implements($obj))) {
+                    // $obj does not implement $type
+                    throw new Exception(get_class() .
+                            ':: Non-' . $type . ' value for ' .
+                            get_class($obj) . ' object');
+                }
             }
         } else {
+            // $obj is not an object
             if (gettype($obj) !== $type) {
+                // $obj is not of type $type
                 throw new Exception(get_class() .
                         ':: Non-' . $type . ' value for ' .
                         gettype($obj) . ' primitive');
@@ -68,7 +74,7 @@ class ObjectBase {
     public function verifyTypes($obj, $types) {
         if (is_object($obj)) {
             foreach ($types as $type) {
-                if (get_class($obj) == $type) {
+                if (get_class($obj) === $type OR in_array($type, class_implements($obj))) {
                     return;
                 }
             }

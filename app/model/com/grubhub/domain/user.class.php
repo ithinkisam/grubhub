@@ -8,22 +8,31 @@
  */
 class User extends ObjectBase implements JsonSerializable, Comparable {
 
+    private $_userId_INT;
     private $_username_STR;
     private $_password_STR;
     private $_email_STR;
     private $_displayName_STR;
     private $_welcomePage_STR;
     private $_shareKey_STR;
-    private $_joinTime_INT;
+    private $_joinDate_DAT;
     
     /**
      *  Default constructor. Username, password and email are
      *  all required fields for a new User.
      */
-    public function __construct($username, $password, $email) {
+    public function __construct($username, $password) {
         $this->setUsername($username);
         $this->setPassword($password);
-        $this->setEmail($email);
+    }
+    
+    public function getUserId() {
+        return $this->_userId_INT;
+    }
+    
+    public function setUserId($userId) {
+        parent::verifyType($userId, "integer");
+        $this->_userId_INT = $userId;
     }
     
     public function getUsername() {
@@ -47,7 +56,7 @@ class User extends ObjectBase implements JsonSerializable, Comparable {
     
     public function setPassword($password) {
         parent::verifyType($password, "string");
-        if (preg_match("/[\w\d!@#$%^&*?\.]*/", $password)) {
+        if (preg_match("/[\w\d!@#$%^&\*\?\.]*/", $password)) {
             $this->_password_STR = $password;
         } else {
             throw new Exception(MessageConfig::USER_INVALID_PASSWORD);
@@ -90,24 +99,29 @@ class User extends ObjectBase implements JsonSerializable, Comparable {
         $this->_shareKey_STR = $shareKey;
     }
     
-    public function getJoinTime() {
-        return $this->_joinTime_INT;
+    public function getJoinDate() {
+        return $this->_joinDate_DAT;
     }
     
-    public function setJoinTime($joinTime) {
-        parent::verifyType($joinTime, "integer");
-        $this->_joinTime_INT = $joinTime;
+    public function setJoinDate($joinDate) {
+        parent::verifyType($joinDate, "DateTime");
+        $this->_joinDate_DAT = $joinDate;
     }
     
     public function __toString() {
         $fields = array();
+        $fields[] = "userId=" . $this->getUserId();
         $fields[] = "username=" . $this->getUsername();
         $fields[] = "password=" . $this->getPassword();
         $fields[] = "email=" . $this->getEmail();
         $fields[] = "displayName=" . $this->getDisplayName();
         $fields[] = "welcomePage=" . $this->getWelcomePage();
         $fields[] = "shareKey=" . $this->getShareKey();
-        $fields[] = "joinTime=" . $this->getJoinTime();
+        if (is_object($this->getJoinDate())) {
+            $fields[] = "joinDate=" . $this->getJoinDate()->format("Y-m-d H:i:s");
+        } else {
+            $fields[] = "joinDate=" . $this->getJoinDate();
+        }
         
         return "User[" . implode("::", $fields) . "]";
     }
@@ -126,10 +140,14 @@ class User extends ObjectBase implements JsonSerializable, Comparable {
     
     public function jsonSerialize() {
         $fields = array();
+        $fields["userId"] = $this->getUserId();
         $fields["username"] = $this->getUsername();
+        $fields["password"] = $this->getPassword();
         $fields["email"] = $this->getEmail();
         $fields["displayName"] = $this->getDisplayName();
-        $fields["joinTime"] = $this->getJoinTime();
+        $fields["welcomePage"] = $this->getWelcomePage();
+        $fields["shareKey"] = $this->getShareKey();
+        $fields["joinDate"] = $this->getJoinDate();
         return $fields;
     }
 

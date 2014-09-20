@@ -1,0 +1,7 @@
+serving_unit_id,description,description_pl
+-1,'Unknown','Unknown'
+0,'',''
+1,'person','people'
+2,'man','men'
+3,'woman','women'
+4,'child','children'

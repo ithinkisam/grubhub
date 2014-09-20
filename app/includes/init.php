@@ -33,6 +33,7 @@ function __autoload($class_name) {
                       "/com/grubhub/filter/",
                       "/com/grubhub/importer/",
                       "/com/grubhub/interface/",
+                      "/com/grubhub/mapper/",
                       "/com/grubhub/security/",
                       "/com/grubhub/utils/"
                     );

@@ -5,87 +5,65 @@
  *  information.
  *
  *  Change History:
- *      01/10/2014 (SDB) - Implemented docs
+ *      01/10/2014 (SDB) - Implemented docs.
+ *      08/16/2014 (SDB) - Refactored for DA changes.
  */
 class UserDAO extends DatabaseUser {
 
-    /**
-     *  Retrieves basic information about a user. Meant to service
-     *  requests from one user about a different user.
-     *
-     *  @param {string} username The username string to target
-     *  @return {User} A User object containing basic user data
-     *  @throws Exception if the username is not found
-     */
-    public function getUserInfo($username) {
-        parent::verifyType($username, "string");
-        $username = strtoupper($username);
-        $table = DataAccessConfig::userData();
-        $values = array($table->all);
-        $target = array($table->username => "'" . $username . "'");
-        $result = $this->selectRows($table->name, $values, $target);
-        
-        if (count($result) != 1) {
-            throw new Exception(MessageConfig::USER_PASSWORD_NOT_FOUND);
-        }
-        $entry = $result[0];
-        $user = new User($entry[$table->username],
-                         "*****", // not allowed to see password
-                         $entry[$table->email]);
-                         
-        if ($entry[$table->displayName] !== null) {
-            $user->setDisplayName($entry[$table->displayName]);
-        } else {
-            $user->setDisplayName($entry[$table->username]);
-        }
-        $user->setJoinTime(intval($entry[$table->joinTime]));
-        
-        return $user;
-    }
-    
     /**
      *  Retrieves information for the user with the given
      *  username and password combination.
      *
      *  @param {string} username The username string to target
      *  @param {string} password The password string to target
-     *  @return {User} A User object containing the users information
+     *  @return {User} A User object containing basic user information
      *  @throws Exception if username/password combo is not found
      */
     public function getUser($username, $password) {
         parent::verifyType($username, "string");
         parent::verifyType($password, "string");
-        $username = strtoupper($username);
+        $username = strtolower($username);
         $table = DataAccessConfig::userData();
-        $values = array($table->all);
-        $target = array(
-                $table->username => "'" . $username . "'",
-                $table->password => "'" . $password . "'"
-            );
-        $result = $this->selectRows($table->name, $values, $target);
+        $values = $table->selectAll;
+        $target = array($table->username => "'" . $username . "'",
+                        $table->password => "'" . $password . "'");
+        $users = $this->selectRows($table->tableName, $values, $target, NULL, new UserMapper());
         
-        if (count($result) != 1) {
+        if (count($users) != 1) {
             throw new Exception(MessageConfig::USER_PASSWORD_NOT_FOUND);
         }
-        $entry = $result[0];
-        $user = new User($entry[$table->username],
-                         $entry[$table->password],
-                         $entry[$table->email]);
-        if ($entry[$table->displayName] !== null) {
-            $user->setDisplayName($entry[$table->displayName]);
-        } else {
-            $user->setDisplayName($entry[$table->username]);
-        }
-        if ($entry[$table->welcomePage] !== null) {
-            $user->setWelcomePage($entry[$table->welcomePage]);
-        }
-        if ($entry[$table->shareKey] !== null) {
-            $user->setShareKey($entry[$table->shareKey]);
-        }
-        $user->setJoinTime(intval($entry[$table->joinTime]));
-        return $user;
+        return $users[0];
     }
     
+    /**
+     *  Retrieves detailed information about a user.
+     *
+     *  @param {string} username The username string to target
+     *  @param {string} password The password string to target
+     *  @return {User} A User object containing detailed user data
+     *  @throws Exception if the username is not found
+     */
+    public function getUserDetail($username, $password) {
+        parent::verifyType($username, "string");
+        $username = strtolower($username);
+        $userTable = DataAccessConfig::userData();
+        $userDetailTable = DataAccessConfig::userDetailData();
+        $table = DataAccessConfig::joinTable(
+                $userTable->tableName,
+                $userDetailTable->tableName,
+                array($userTable->userId => $userDetailTable->userId));
+        $values = array_merge($userTable->selectAll,
+                              $userDetailTable->selectAll);
+        $target = array($userTable->username => "'" . $username . "'",
+                        $userTable->password => "'" . $password . "'");
+        $users = $this->selectRows($table, $values, $target, NULL, new UserDetailMapper());
+        
+        if (count($users) != 1) {
+            throw new Exception(MessageConfig::USER_PASSWORD_NOT_FOUND);
+        }
+        return $users[0];
+    }
+
     /**
      *  Updates any user information that has been changed (usernames
      *  and passwords cannot be updated via this method).
@@ -97,18 +75,24 @@ class UserDAO extends DatabaseUser {
      */
     public function updateUser($user) {
         parent::verifyType($user, "User");
-        $table = DataAccessConfig::userData();
+        $userTable = DataAccessConfig::userData();
+        $userDetailTable = DataAccessConfig::userDetailData();
+        $table = DataAccessConfig::joinTable(
+                $userTable->tableName,
+                $userDetailTable->tableName,
+                array($userTable->userId => $userDetailTable->userId)
+            );
         $values = array(
-                $table->email => "'" . $user->getEmail() . "'",
-                $table->displayName => "'" . $user->getDisplayName() . "'",
-                $table->welcomePage => "'" . $user->getWelcomePage() . "'",
-                $table->shareKey => "'" . $user->getShareKey() . "'"
+                $userDetailTable->email => "'" . $user->getEmail() . "'",
+                $userDetailTable->displayName => "'" . $user->getDisplayName() . "'",
+                $userDetailTable->welcomePage => "'" . $user->getWelcomePage() . "'",
+                $userDetailTable->shareKey => "'" . $user->getShareKey() . "'"
             );
         $target = array(
-                $table->username => "'" . strtoupper($user->getUsername()) . "'",
-                $table->password => "'" . $user->getPassword() . "'"
+                $userTable->username => "'" . strtolower($user->getUsername()) . "'",
+                $userTable->password => "'" . $user->getPassword() . "'"
             );
-        $result = $this->updateTable($table->name, $values, $target);
+        $result = $this->updateTable($table, $values, $target);
         
         if ($result !== true) {
             throw new Exception(MessageConfig::USER_NOT_FOUND);
@@ -126,7 +110,7 @@ class UserDAO extends DatabaseUser {
     public function addUser($user) {
         parent::verifyType($user, "User");
         $values = array(
-                "'" . strtoupper($user->getUsername()) . "'",
+                "'" . strtolower($user->getUsername()) . "'",
                 "'" . $user->getPassword() . "'",
                 "'" . $user->getEmail() . "'",
                 "'" . $user->getDisplayName() . "'",
@@ -154,10 +138,10 @@ class UserDAO extends DatabaseUser {
         parent::verifyType($user, "User");
         $table = DataAccessConfig::userData();
         $target = array(
-                $table->username => "'" . strtoupper($user->getUsername()) . "'",
+                $table->username => "'" . strtolower($user->getUsername()) . "'",
                 $table->password => "'" . $user->getPassword() . "'"
             );
-        $result = $this->deleteRows($table->name, $target);
+        $result = $this->deleteRows($table->tableName, $target);
         
         if ($result !== true) {
             // try to resolve
@@ -169,52 +153,26 @@ class UserDAO extends DatabaseUser {
         return $result; // true
     }
     
-    /**
-     *  Whether the provided User is present in the system.
-     *
-     *  @param {User} user A User object containing information for the
-     *              targetted user.
-     *  @return {boolean} Whether or not the User is present in the system.
-     */
-    public function isUser($user) {
+    public function isAuthorized($user, $controller, $action) {
         parent::verifyType($user, "User");
-        $table = DataAccessConfig::userData();
-        $values = array("*");
-        $target = array(
-                $table->username => "'" . strtoupper($user->getUsername()) . "'",
-                $table->password => "'" . $user->getPassword() . "'"
+        $userTable = DataAccessConfig::userData();
+        $userGroupRelation = DataAccessConfig::userGroupRelationData();
+        $authTable = DataAccessConfig::authData();
+        $table = DataAccessConfig::joinTables(
+                $userTable->tableName,
+                $userGroupRelation->tableName,
+                $authTable->tableName,
+                array($userTable->userId => $userGroupRelation->userId),
+                array($userGroupRelation->userGroup => $authTable->userGroup)
             );
-        $result = $this->selectRows($table->name, $values, $target);
-        
-        if (count($result) == 1) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     *  Retrieves a User object based on share key.
-     *
-     *  @param {string} shareKey A string
-     *  @return {User} A User object corresponding to the user that provided
-     *          the share key.
-     *  @throws Exception if the share key is not valid.
-     */
-    public function getUserFromShareKey($shareKey) {
-        parent::verifyType($shareKey, "string");
-        $table = DataAccessConfig::userData();
-        $values = array($table->username, $table->password);
-        $target = array($table->shareKey => "'" . $shareKey . "'");
-        $result = $this->selectRows($table->name, $values, $target);
-        
-        if (count($result) == 1) {
-            $entry = $result[0];
-            return $this->getUser($entry[$table->username],
-                                  $entry[$table->password]
-                                  );
-        } else {
-            throw new Exception(MessageConfig::USER_INVALID_SHARE_KEY);
-        }
+        $values = array($userTable->username);
+        $target = array(
+                $userTable->username => "'" . strtolower($user->getUsername),
+                $userTable->password => "'" . $user->getPassword() . "'",
+                $authTable->controller => "'" . $controller . "'",
+                $authTable->action=> "'" . $action . "'"
+            );
+        return $this->selectRows($table, $values, $target);
     }
     
     /*
@@ -226,14 +184,11 @@ class UserDAO extends DatabaseUser {
     private function usernameExists($username) {
         parent::verifyType($username, "string");
         $table = DataAccessConfig::userData();
-        $values = array($table->username);
+        $values = array($table->userId);
         $target = array($table->username => "'" . $username . "'");
-        $result = $this->selectRows($table->name, $values, $target);
+        $result = $this->selectRows($table->tableName, $values, $target);
         
-        if (count($result) == 1) {
-            return true;
-        }
-        return false;
+        return count($result) == 1;
     }
 
 }

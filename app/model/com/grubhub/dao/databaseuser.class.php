@@ -36,7 +36,7 @@ abstract class DatabaseUser extends ObjectBase {
         $values = self::encodeValues($values);
         $target = self::encodeValues($target);
         
-        $query = "UPDATE $table SET";
+        $query = "UPDATE $table SET ";
         
         $key_values = array();
         foreach ($values as $key => $value) {
@@ -44,7 +44,7 @@ abstract class DatabaseUser extends ObjectBase {
         }
         
         $query .= implode(", ", $key_values);
-        $query .= " WHERE";
+        $query .= " WHERE ";
         
         $key_values = array();
         foreach ($target as $key => $value) {
@@ -106,7 +106,7 @@ abstract class DatabaseUser extends ObjectBase {
      *          syntax:
      *              $result[0]["firstName"]
      */
-    public function selectRows($table, $values, $target, $orderby=NULL, $dbhandle=false) {
+    public function selectRows($table, $values, $target, $orderby=NULL, $mapper=NULL, $dbhandle=false) {
         $target_size = count($target);
         $values_size = count($values);
         if ($values_size == 0) { return false; }
@@ -115,6 +115,9 @@ abstract class DatabaseUser extends ObjectBase {
         $target = self::encodeValues($target);
         
         $query = "SELECT ";
+        foreach ($values as $key => $value) {
+            $values[$key] = $value . " AS '" . $value . "'";
+        }
         $query .= implode(', ', $values);
         $query .= " FROM $table";
         
@@ -138,7 +141,17 @@ abstract class DatabaseUser extends ObjectBase {
         }
         
         Logger::debug(get_class(), __FUNCTION__, $query);
-        return self::sendQuery($query, $dbhandle);
+        if (is_null($mapper)) {
+            return self::sendQuery($query, $dbhandle);
+        } else {
+            parent::verifyType($mapper, "Mapper");
+            $results = self::sendQuery($query, $dbhandle);
+            $mappedObjs = array();
+            foreach ($results as $result) {
+                $mappedObjs[] = $mapper->mapResult($result);
+            }
+            return $mappedObjs;
+        }
     }
     
     /**
@@ -189,6 +202,13 @@ abstract class DatabaseUser extends ObjectBase {
         return self::sendQuery($query, $dbhandle);
     }
     
+    public function doFunction($name, $parameters, $dbhandle=false) {
+        $parameters = self::encodeValues($parameters);
+        $query = "SELECT $name(" . implode(", ", $parameters) . ") AS RESULT";
+        Logger::debug(get_class(), __FUNCTION__, $query);
+        return self::sendQuery($query, $dbhandle)[0]['RESULT'];
+    }
+    
     /**
      *  Executes the provided query and packages the results in an
      *  array for consistency.
@@ -229,14 +249,15 @@ abstract class DatabaseUser extends ObjectBase {
         $database = "butlergrubhub";
         $server = "butlergrubhub.db.9643873.hostedresource.com";
         
-        $dbhandle = new mysqli($server, $username, $password, $database);
+        // try localhost (for dev)
+        $dbhandle = new mysqli("localhost", "root", NULL, "butlergrubhub");
         $dbfound = !mysqli_connect_errno();
         
         if ($dbfound) {
             return $dbhandle;
         } else {
-            // try localhost (for dev)
-            $dbhandle = new mysqli("localhost", "root", NULL, "butlergrubhub");
+            // Production database
+            $dbhandle = new mysqli($server, $username, $password, $database);
             $dbfound = !mysqli_connect_errno();
             
             if ($dbfound) {
@@ -334,9 +355,10 @@ abstract class DatabaseUser extends ObjectBase {
      *  @param {resource} A result resource obtained from a mysql query.
      */
     private function packageInArray($result) {
-        $package = array();
         if ($result === false) { return false; }
         if ($result === true) { return true; }
+        
+        $package = array();
         while ($entry = $result->fetch_assoc()) {
             $package[] = self::decodeValues($entry);
         }

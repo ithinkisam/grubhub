@@ -6,7 +6,7 @@
  *  Change History:
  *      01/10/2014 (SDB) - Implemented docs
  */
-abstract class CookingUnit {
+abstract class IngredientUnit {
 
     const UNKNOWN   = -1;
     const NONE      = 0;

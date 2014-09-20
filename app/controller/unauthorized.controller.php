@@ -5,7 +5,7 @@
  *
  *  @since 1.0.0
  */
-class IndexController extends BaseController {
+class UnauthorizedController extends BaseController {
     
     /**
      *  See BaseController.index()
@@ -16,8 +16,7 @@ class IndexController extends BaseController {
         
         // show views
         $this->registry->template->show('_header');
-        $this->registry->template->show('_nav.guest');
-        $this->registry->template->show('index');
+        $this->registry->template->show('unauthorized');
         $this->registry->template->show('_footer.guest');
     }
 

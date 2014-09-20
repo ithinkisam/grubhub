@@ -6,24 +6,24 @@
  */
 class Session {
 
-    private $currentUser;
+    private $_user_USR;
 
     function __construct() {
         session_start();
     
-        if (isset($_SESSION['user']) === false) {
-            $_SESSION['user'] = '';
-            $_SESSION['pass'] = '';
+        if (isset($_SESSION[AppConstants::SESSION_USER]) === false) {
+            $_SESSION[AppConstants::SESSION_USER] = '';
+            $_SESSION[AppConstants::SESSION_PASSWORD] = '';
         }
         
-        $user = $_SESSION['user'];
-        $pass = $_SESSION['pass'];
+        $user = $_SESSION[AppConstants::SESSION_USER];
+        $pass = $_SESSION[AppConstants::SESSION_PASSWORD];
         
-        $this->currentUser = new User($user, $pass, "");
+        $this->_user_USR = new User($user, $pass);
     }
     
-    public function getCurrentUser() {
-        return $this->currentUser;
+    public function getUser() {
+        return $this->_user_USR;
     }
     
     public function destroy() {

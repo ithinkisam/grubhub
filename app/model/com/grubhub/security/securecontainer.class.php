@@ -2,23 +2,23 @@
 
 class SecureContainer {
 
-    protected $target = null;
-    protected $acl = null;
+    protected $_target_OBJ = null;
+    protected $_acl = null;
 
     public function __construct($target, $acl) {
-        $this->target = $target;
-        $this->acl = $acl;
+        $this->_target_OBJ = $target;
+        $this->_acl = $acl;
     }
 
     public function __call($method, $arguments) {
-        if (method_exists($this->target, $method)
-                && $this->acl->isAllowed(get_class($this->target), $method)) {
+        if (method_exists($this->_target_OBJ, $method)
+                && $this->_acl->isAllowed(get_class($this->_target_OBJ), $method)) {
             return call_user_func_array(
-                    array( $this->target, $method ),
+                    array($this->_target_OBJ, $method),
                     $arguments
                 );
         } else {
-            throw new Exception("Unauthorized");
+            throw new NotAuthorizedException(MessageConfig::USER_NOT_AUTHORIZED);
         }
     }
 
